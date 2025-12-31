@@ -6,29 +6,31 @@ class GeminiService {
     try {
       const castNames = movie.credits?.cast?.slice(0, 3).map(c => c.name).join(', ') || 'N/A';
       const genres = movie.genres?.map(g => g.name).join(', ') || 'N/A';
+      const budget = (movie.budget/1000000).toFixed(1);
+      const revenue = (movie.revenue/1000000).toFixed(1);
       
-      const prompt = `Filmi Bharat SEO Blog:
+      const prompt = `Filmi Bharat AI Analysis & Insights (${movie.title}):
 
-MOVIE: ${movie.title} (${movie.release_date?.slice(0,4)})
-IMDB: ${movie.vote_average}/10 | Genres: ${genres}
-Budget: $${(movie.budget/1000000).toFixed(1)}M | Revenue: $${(movie.revenue/1000000).toFixed(1)}B
-Top Cast: ${castNames}
+**1. Synopsis**: ${movie.overview}
+**2. Performance Spotlight**: ${castNames}
+**3. The Scorecard** (Why watch):
+**4. The Caveat** (Cons):
+**5. Data Deep Dive**: Budget $${budget}M | Revenue $${revenue}B | ROI Analysis
+**6. Who Should Watch?**: ${genres} fans
 
-**Required Format:**
-1. **Synopsis** (1-2 paragraphs)
-2. **Performance Spotlight** (${castNames})
-3. **The Scorecard** (3-5 bullets)
-4. **The Caveat** (2-3 cons) 
-5. **Data Deep Dive** (ROI analysis)
-6. **Who Should Watch?** (${genres} fans)`;
+Write human-like SEO content in English following EXACT structure above.`;
 
-      // ✅ 100% WORKING MODEL (Official Docs):
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      // ✅ v1beta API Version + Blueprint Perfect
+      const model = genAI.getGenerativeModel({ 
+        model: 'gemini-1.5-flash',
+        apiVersion: 'v1beta'  // ← MAGIC FIX!
+      });
+      
       const result = await model.generateContent(prompt);
-      return await result.response.text();
+      return result.response.text();
     } catch (error) {
-      console.error('Gemini Error FULL:', error);
-      return 'AI Blog temporarily unavailable. Coming soon!';
+      console.error('Gemini Error:', error.message);
+      return `AI Blog temporarily unavailable. Error: ${error.message.substring(0, 100)}`;
     }
   }
 }
