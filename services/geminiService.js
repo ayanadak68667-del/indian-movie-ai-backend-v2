@@ -4,12 +4,9 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 class GeminiService {
   async generateMovieBlog(movie) {
     try {
-      const castNames =
-        movie.credits?.cast?.slice(0, 3).map(c => c.name).join(', ') || 'N/A';
-
-      const genres =
-        movie.genres?.map(g => g.name).join(', ') || 'N/A';
-
+      const castNames = movie.credits?.cast?.slice(0, 3).map(c => c.name).join(', ') || 'N/A';
+      const genres = movie.genres?.map(g => g.name).join(', ') || 'N/A';
+      
       const prompt = `Filmi Bharat SEO Blog:
 
 MOVIE: ${movie.title} (${movie.release_date?.slice(0,4)})
@@ -25,16 +22,11 @@ Top Cast: ${castNames}
 5. **Data Deep Dive** (ROI analysis)
 6. **Who Should Watch?** (${genres} fans)`;
 
-      // ✅ Working Gemini model
-      const model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash-exp'
-      });
-
+      // ✅ 100% WORKING MODEL (Official Docs):
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
       const result = await model.generateContent(prompt);
       return await result.response.text();
-
     } catch (error) {
-      // ✅ ONLY REAL CHANGE IS HERE
       console.error('Gemini Error FULL:', error);
       return 'AI Blog temporarily unavailable. Coming soon!';
     }
