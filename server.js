@@ -5,17 +5,27 @@ const mongoose = require('mongoose');
 
 const homeRoutes = require('./routes/home');
 const movieRoutes = require('./routes/movie');
+
 const app = express();
+
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://raatkibaat.in',
+  'https://www.raatkibaat.in',
+];
 
 // Middleware
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://raatkibaat.in',
-    'https://www.raatkibaat.in'
-  ],
-  credentials: true
+  origin: allowedOrigins,
+  credentials: true,
 }));
+
+// Preflight (optional but helpful)
+app.options('*', cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
+
 app.use(express.json());
 
 // MongoDB
