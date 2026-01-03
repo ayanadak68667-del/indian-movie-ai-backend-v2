@@ -4,7 +4,8 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 
 const homeRoutes = require('./routes/home');
-const movieRoutes = require('./routes/movie');
+const movieRoutes = require('./routes/movieRoutes');
+const aiChatRoute = require('./routes/aiChat');
 
 const app = express();
 
@@ -19,8 +20,7 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow Postman / server-to-server requests
-    if (!origin) return callback(null, true);
+    if (!origin) return callback(null, true); // Postman / Server requests
 
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
@@ -31,7 +31,6 @@ app.use(cors({
   credentials: true,
 }));
 
-// Preflight support
 app.options('*', cors());
 
 /* =========================
@@ -40,7 +39,7 @@ app.options('*', cors());
 app.use(express.json());
 
 /* =========================
-   MONGODB
+   DATABASE
 ========================= */
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected'))
@@ -51,12 +50,13 @@ mongoose.connect(process.env.MONGO_URI)
 ========================= */
 app.use('/api/home', homeRoutes);
 app.use('/api/movie', movieRoutes);
+app.use('/api/ai', aiChatRoute); // Gemini AI
 
 /* =========================
    HEALTH CHECK
 ========================= */
 app.get('/', (req, res) => {
-  res.send('Filmi Bharat Backend v2 ✅');
+  res.send('🎬 Filmi Bharat Backend v3 (AI + Secure)');
 });
 
 app.get('/health', (req, res) => {
@@ -64,9 +64,22 @@ app.get('/health', (req, res) => {
 });
 
 /* =========================
-   SERVER START
+   ERROR HANDLER
 ========================= */
-const PORT = process.env.PORT || 3000;
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Server Error',
+  });
+});
+
+/* =========================
+   SERVER
+========================= */
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log('🤖 Gemini AI Enabled');
+  console.log('🎥 Movie API Ready');
 });
