@@ -5,16 +5,17 @@ const router = express.Router();
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 const API_KEY = process.env.TMDB_API_KEY;
 
-// Trending Indian Movies
+// 1. Trending Indian Movies (Filtered for 2024-2025)
 router.get('/trending', async (req, res) => {
   try {
-    const year = req.query.year || new Date().getFullYear();
+    // ডিফল্টভাবে ২০২৫ সাল সেট করা হলো যাতে ওল্ড মুভি না আসে
+    const year = req.query.year || 2025; 
 
     const response = await axios.get(`${TMDB_BASE_URL}/discover/movie`, {
       params: {
         api_key: API_KEY,
         region: 'IN',
-        with_original_language: 'hi,te,ta,ml,kn',
+        with_original_language: 'hi|te|ta|ml|be|kn', // কমা (,) এর বদলে পাইপ (|) ব্যবহার করা বেশি কার্যকর TMDB-তে
         primary_release_year: year,
         sort_by: 'popularity.desc'
       }
@@ -27,14 +28,14 @@ router.get('/trending', async (req, res) => {
   }
 });
 
-// Popular Indian Web Series
+// 2. Popular Indian Web Series
 router.get('/popular-webseries', async (req, res) => {
   try {
     const response = await axios.get(`${TMDB_BASE_URL}/tv/popular`, {
       params: {
         api_key: API_KEY,
         region: 'IN',
-        with_original_language: 'hi'
+        with_original_language: 'hi|te|ta|ml|be|kn' // ভারতীয় ওয়েব সিরিজের জন্য
       }
     });
 
@@ -45,7 +46,7 @@ router.get('/popular-webseries', async (req, res) => {
   }
 });
 
-// Upcoming Indian Movies
+// 3. Upcoming Indian Movies
 router.get('/upcoming', async (req, res) => {
   try {
     const response = await axios.get(`${TMDB_BASE_URL}/movie/upcoming`, {
