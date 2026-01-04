@@ -4,7 +4,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 
 const homeRoutes = require('./routes/home');
-const movieRoutes = require('./routes/movieRoutes');
+const movieRoutes = require('./routes/movie');
 const aiChatRoute = require('./routes/aiChat');
 
 const app = express();
