@@ -1,32 +1,21 @@
+// services/mongoCacheService.js (Updated for your route)
 const MovieModel = require('../models/Movie');
 
 class MongoCacheService {
-  // ক্যাশ থেকে ডেটা খোঁজা
   async get(tmdbId) {
     try {
-      const cachedData = await MovieModel.findOne({ tmdbId });
-      return cachedData ? cachedData : null;
+      return await MovieModel.findOne({ tmdbId });
     } catch (error) {
-      console.error('Cache Get Error:', error);
       return null;
     }
   }
 
-  // ক্যাশ-এ ডেটা সেভ করা (যদি আগে না থাকে)
-  async set(tmdbId, movieData, aiBlog, trailer, playlist) {
+  // এখন এটি পুরো একটি অবজেক্ট (data) গ্রহণ করবে
+  async set(data) {
     try {
       await MovieModel.findOneAndUpdate(
-        { tmdbId },
-        {
-          tmdbId,
-          title: movieData.title,
-          poster_path: movieData.poster_path,
-          release_date: movieData.release_date,
-          trailer,
-          playlist,
-          aiBlog,
-          details: movieData
-        },
+        { tmdbId: data.tmdbId },
+        data, // পুরো অবজেক্টটি সরাসরি সেভ হবে
         { upsert: true, new: true }
       );
     } catch (error) {
