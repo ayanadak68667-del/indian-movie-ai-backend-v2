@@ -1,10 +1,17 @@
+const express = require('express');
+const router = express.Router();
+
+const tmdbService = require('../services/tmdbService');
+const youtubeService = require('../services/youtubeService');
+const { generateMovieBlog } = require('../services/groqService');
+const mongoCache = require('../services/mongoCacheService');
+
 router.get('/:id', async (req, res) => {
+  const movieId = req.params.id;
+
   try {
-    const movieId = req.params.id;
-
-    // 1️⃣ DB Cache Check
-    let cachedMovie = await MovieModel.findOne({ tmdbId: movieId });
-
+    // 1️⃣ MongoDB Cache Check
+    const cachedMovie = await mongoCache.get(movieId);
     if (cachedMovie) {
       return res.json({
         success: true,
@@ -16,32 +23,27 @@ router.get('/:id', async (req, res) => {
       });
     }
 
-    // 2️⃣ TMDB Fetch
+    // 2️⃣ TMDB API Fetch
     const movie = await tmdbService.getMovieDetails(movieId);
 
-    // 3️⃣ Parallel calls with error protection
-    // আমরা .catch ব্যবহার করছি যাতে একটা ফেল করলে অন্যগুলো কাজ করে
+    // 3️⃣ Parallel Calls (Fault-Tolerant)
     const [trailer, playlist, aiBlog] = await Promise.all([
       youtubeService.getTrailer(movie.title).catch(() => null),
       youtubeService.getPlaylist(movie.title).catch(() => null),
-      generateMovieBlog(movie).catch(() => "AI Blog is being updated...")
+      generateMovieBlog(movie).catch(() => 'AI Blog is being generated...')
     ]);
 
-    // 4️⃣ Save to DB (Upsert logic to avoid duplicates)
-    const savedMovie = await MovieModel.findOneAndUpdate(
-      { tmdbId: movieId },
-      {
-        tmdbId: movieId,
-        title: movie.title,
-        poster_path: movie.poster_path,
-        release_date: movie.release_date,
-        trailer,
-        playlist,
-        aiBlog,
-        details: movie
-      },
-      { upsert: true, new: true } // যদি না থাকে তবে তৈরি করবে, থাকলে আপডেট করবে
-    );
+    // 4️⃣ Save to MongoDB (Upsert Cache)
+    await mongoCache.set({
+      tmdbId: movieId,
+      title: movie.title,
+      poster_path: movie.poster_path,
+      release_date: movie.release_date,
+      details: movie,
+      trailer,
+      playlist,
+      aiBlog
+    });
 
     res.json({
       success: true,
@@ -53,10 +55,12 @@ router.get('/:id', async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Critical Error:", error);
+    console.error('Movie Route Error:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to load movie details'
     });
   }
 });
+
+module.exports = router;
