@@ -1,41 +1,64 @@
 const express = require('express');
-const tmdbService = require('../services/tmdbService');
+const axios = require('axios');
 const router = express.Router();
 
-// 4 Home Categories (Indian Movies + Web Series)
+const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
+const API_KEY = process.env.TMDB_API_KEY;
+
+// Trending Indian Movies
 router.get('/trending', async (req, res) => {
   try {
-    const movies = await tmdbService.getTrendingIndia();
-    res.json({ success: true, data: movies });
+    const year = req.query.year || new Date().getFullYear();
+
+    const response = await axios.get(`${TMDB_BASE_URL}/discover/movie`, {
+      params: {
+        api_key: API_KEY,
+        region: 'IN',
+        with_original_language: 'hi,te,ta,ml,kn',
+        primary_release_year: year,
+        sort_by: 'popularity.desc'
+      }
+    });
+
+    res.json({ success: true, data: response.data.results });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch trending movies' });
   }
 });
 
+// Popular Indian Web Series
 router.get('/popular-webseries', async (req, res) => {
   try {
-    const series = await tmdbService.getPopularWebSeriesIndia();
-    res.json({ success: true, data: series });
+    const response = await axios.get(`${TMDB_BASE_URL}/tv/popular`, {
+      params: {
+        api_key: API_KEY,
+        region: 'IN',
+        with_original_language: 'hi'
+      }
+    });
+
+    res.json({ success: true, data: response.data.results });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch web series' });
   }
 });
 
-router.get('/top-imdb', async (req, res) => {
-  try {
-    const topRated = await tmdbService.getTopRatedIndia();
-    res.json({ success: true, data: topRated });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
+// Upcoming Indian Movies
 router.get('/upcoming', async (req, res) => {
   try {
-    const upcoming = await tmdbService.getUpcomingIndia();
-    res.json({ success: true, data: upcoming });
+    const response = await axios.get(`${TMDB_BASE_URL}/movie/upcoming`, {
+      params: {
+        api_key: API_KEY,
+        region: 'IN'
+      }
+    });
+
+    res.json({ success: true, data: response.data.results });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error(error.message);
+    res.status(500).json({ success: false, message: 'Failed to fetch upcoming movies' });
   }
 });
 
