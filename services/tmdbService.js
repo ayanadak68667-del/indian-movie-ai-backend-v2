@@ -1,5 +1,4 @@
 const axios = require('axios');
-
 const TMDB_BASE = 'https://api.themoviedb.org/3';
 const API_KEY = process.env.TMDB_API_KEY;
 
@@ -18,75 +17,60 @@ class TMDBService {
     }
   }
 
-  // ---------------- HOME SECTIONS ----------------
+  // ১. সার্চ বারের জন্য (Search Results)
+  async searchMovie(query) {
+    const data = await this.safeGet(`${TMDB_BASE}/search/movie`, {
+      query,
+      language: 'en-IN',
+      region: 'IN'
+    });
+    return data?.results || [];
+  }
 
-  async getTrendingIndia() {
+  // ২. মুড ডিসকভারি (Mood Discovery - Horror, Romance, etc.)
+  // ইউজার ইমোজিতে ক্লিক করলে এই ফাংশনটি কাজ করবে
+  async getMoviesByGenre(genreId) {
     const data = await this.safeGet(`${TMDB_BASE}/discover/movie`, {
+      with_genres: genreId,
+      sort_by: 'popularity.desc',
       region: 'IN',
-      with_original_language: 'hi|te|ta|ml|be|kn',
-      sort_by: 'popularity.desc'
+      with_original_language: 'bn|hi|en'
     });
-    return data?.results?.slice(0, 20) || [];
+    return data?.results?.slice(0, 10) || [];
   }
 
-  async getPopularWebSeriesIndia() {
-    const data = await this.safeGet(`${TMDB_BASE}/discover/tv`, {
-      region: 'IN',
-      with_networks: '447|102|119',
-      sort_by: 'popularity.desc'
+  // ৩. ট্রেন্ডিং সেকশন (Trending Now Top 10)
+  async getTrendingNow() {
+    const data = await this.safeGet(`${TMDB_BASE}/trending/movie/day`, {
+      region: 'IN'
     });
-    return data?.results?.slice(0, 20) || [];
+    return data?.results?.slice(0, 10) || [];
   }
 
-  async getTopRatedIndia() {
+  // ৪. পপুলার ওয়েব সিরিজ (Popular Web Series)
+  async getPopularWebSeries() {
+    const data = await this.safeGet(`${TMDB_BASE}/tv/popular`, {
+      region: 'IN',
+      with_original_language: 'bn|hi|en'
+    });
+    return data?.results?.slice(0, 10) || [];
+  }
+
+  // ৫. টপ আইএমডিবি রেটেড (Top IMDb Rated)
+  async getTopRated() {
     const data = await this.safeGet(`${TMDB_BASE}/movie/top_rated`, {
-      region: 'IN',
-      with_original_language: 'hi|te|ta'
+      region: 'IN'
     });
-    return data?.results?.slice(0, 20) || [];
+    return data?.results?.slice(0, 10) || [];
   }
 
-  async getUpcomingIndia() {
+  // ৬. আপকামিং রিলিজ (Upcoming Releases)
+  async getUpcoming() {
     const data = await this.safeGet(`${TMDB_BASE}/movie/upcoming`, {
       region: 'IN'
     });
-    return data?.results?.slice(0, 20) || [];
+    return data?.results?.slice(0, 10) || [];
   }
-
-  // ---------------- MOVIE CORE ----------------
-
-  async getMovieDetails(id) {
-    return await this.safeGet(`${TMDB_BASE}/movie/${id}`, {
-      region: 'IN',
-      append_to_response: 'credits,videos,external_ids'
-    });
-  }
-
-  async getWatchProviders(id) {
-    const data = await this.safeGet(`${TMDB_BASE}/movie/${id}/watch/providers`);
-    return this.normalizeWatchProviders(data?.results?.IN);
-  }
-
-  // ---------------- NORMALIZERS ----------------
-
-  normalizeWatchProviders(providers = {}) {
-    const list = providers?.flatrate || [];
-
-    const has = (name) =>
-      list.some(p =>
-        p.provider_name.toLowerCase().includes(name)
-      );
-
-    return {
-      netflix: has("netflix"),
-      prime: has("prime"),
-      hotstar: has("hotstar") || has("disney"),
-      sonyLiv: has("sony"),
-      zee5: has("zee"),
-      link: providers?.link || ""
-    };
-  }
-
 }
 
 module.exports = new TMDBService();
