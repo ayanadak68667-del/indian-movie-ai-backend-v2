@@ -1,44 +1,61 @@
 const mongoose = require('mongoose');
 
 const MovieSchema = new mongoose.Schema({
+
   tmdbId: {
     type: String,
     required: true,
-    unique: true, // একই মুভি যেন বারবার সেভ না হয়
+    unique: true,
+    index: true
   },
-  title: {
-    type: String,
-    required: true,
-  },
-  poster_path: {
-    type: String,
-  },
-  release_date: {
-    type: String,
-  },
-  // YouTube Data
-  trailer: {
-    type: Object, // embedUrl সহ পুরো অবজেক্ট সেভ করার জন্য
-    default: null
-  },
-  playlist: {
-    type: Object,
-    default: null
-  },
-  // AI Generated Blog
-  aiBlog: {
-    type: String,
-    required: true,
-  },
-  // TMDB Full Details (ভবিষ্যতে কাজে লাগতে পারে)
+
+  title: String,
+  poster_path: String,
+  release_date: String,
+
+  // TMDB Full Details
   details: {
     type: Object,
+    default: {}
   },
-  createdAt: {
+
+  // YouTube
+  trailer: {
+    type: Object,
+    default: null
+  },
+
+  playlist: {
+    type: Array,
+    default: []
+  },
+
+  // ✅ Structured AI Blog
+  aiBlog: {
+    type: Object,
+    default: {}
+  },
+
+  // ✅ OTT Providers
+  watchProviders: {
+    type: Object,
+    default: {}
+  },
+
+  // ✅ Meta Flags
+  meta: {
+    isTrending: { type: Boolean, default: false },
+    isNew: { type: Boolean, default: false },
+    popularity: { type: Number, default: 0 },
+    imdbRating: { type: Number, default: 0 }
+  },
+
+  // ✅ Cache / Trust badge
+  lastUpdated: {
     type: Date,
-    default: Date.now,
-    expires: 2592000 // ৩০ দিন পর অটো ডিলিট হবে (Optional Caching Strategy)
+    default: Date.now
   }
-});
+
+}, { timestamps: true }); // createdAt + updatedAt auto
 
 module.exports = mongoose.model('Movie', MovieSchema);
