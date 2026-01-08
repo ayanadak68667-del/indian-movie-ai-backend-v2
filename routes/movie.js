@@ -9,11 +9,62 @@ const mongoCache = require('../services/mongoCacheService');
 // ⏳ Cache expiry (24 hours)
 const CACHE_TTL = 1000 * 60 * 60 * 24;
 
+// ---------------------------------------------------------
+// 🔍 1. SEARCH MOVIES (এটি অবশ্যই সবার উপরে থাকবে)
+// ---------------------------------------------------------
+router.get('/search/:query', async (req, res) => {
+  try {
+    const query = req.params.query;
+
+    if (!query || query.trim().length < 2) {
+      return res.json({ success: true, data: [] });
+    }
+
+    const results = await tmdbService.searchMovie(query);
+
+    res.json({
+      success: true,
+      data: results
+    });
+
+  } catch (error) {
+    console.error('Search Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Search failed'
+    });
+  }
+});
+
+// ---------------------------------------------------------
+// 🏠 2. HOME PAGE SECTIONS (Trending, Upcoming, etc.)
+// ---------------------------------------------------------
+
+// Trending Now
+router.get('/home/trending', async (req, res) => {
+  const data = await tmdbService.getTrendingNow();
+  res.json({ success: true, data });
+});
+
+// Popular Web Series
+router.get('/home/series', async (req, res) => {
+  const data = await tmdbService.getPopularWebSeries();
+  res.json({ success: true, data });
+});
+
+// Top Rated
+router.get('/home/top-rated', async (req, res) => {
+  const data = await tmdbService.getTopRated();
+  res.json({ success: true, data });
+});
+
+// ---------------------------------------------------------
+// 🎬 3. MOVIE DETAILS BY ID (এটি শেষে থাকবে)
+// ---------------------------------------------------------
 router.get('/:id', async (req, res) => {
   const movieId = req.params.id;
 
   try {
-
     // 1️⃣ MongoDB Cache Check
     const cachedMovie = await mongoCache.get(movieId);
 
@@ -96,12 +147,6 @@ router.get('/:id', async (req, res) => {
     res.status(500).json({
       success: false,
       movie: {},
-      trailer: null,
-      playlist: [],
-      aiBlog: {},
-      watchProviders: {},
-      meta: {},
-      lastUpdated: null,
       message: 'Failed to load movie details'
     });
   }
