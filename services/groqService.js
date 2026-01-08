@@ -1,30 +1,56 @@
 const Groq = require("groq-sdk");
 
-// Render/Glitch এর Environment থেকে Key নেবে
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
-const generateMovieBlog = async (movieData) => {
+const generateMovieBlog = async (movie) => {
+
   try {
-    const chatCompletion = await groq.chat.completions.create({
-      "messages": [
-        {
-          "role": "system",
-          "content": "You are an expert Indian Cinema Critic and SEO Blogger for 'Filmi Bharat'. Write a detailed review with sections: Synopsis, Performance, Pros & Cons, Box-office, and Target Audience. Use professional and engaging tone."
-        },
-        {
-          "role": "user",
-          "content": `Write a blog for the movie: ${movieData.title}. Plot: ${movieData.overview}. Cast: ${movieData.cast}. Language: ${movieData.language}.`
-        }
-      ],
-      "model": "llama3-70b-8192", // দ্রুততম এবং শক্তিশালী মডেল
-      "temperature": 0.7,
-      "max_tokens": 1024
+
+    const prompt = `
+Return ONLY a valid JSON object (no markdown, no explanation) in this exact format:
+
+{
+  "synopsis": "Brief story summary (3-4 lines)",
+  "performance": "Actors, direction, music analysis",
+  "pros": ["point1", "point2", "point3"],
+  "cons": ["point1", "point2"],
+  "verdict": "Final critical opinion",
+  "audience": "Who should watch this movie"
+}
+
+Movie:
+Title: ${movie.title}
+Overview: ${movie.overview}
+Release date: ${movie.release_date}
+Language: ${movie.original_language}
+Rating: ${movie.vote_average}
+Cast: ${movie.credits?.cast?.slice(0,5).map(c => c.name).join(", ")}
+`;
+
+    const completion = await groq.chat.completions.create({
+      model: "llama3-70b-8192",
+      temperature: 0.6,
+      max_tokens: 900,
+      messages: [
+        { role: "system", content: "You are an expert Indian movie critic and SEO blogger." },
+        { role: "user", content: prompt }
+      ]
     });
 
-    return chatCompletion.choices[0]?.message?.content || "";
+    const raw = completion.choices[0]?.message?.content || "";
+
+    // ✅ JSON safety guard
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed;
+    } catch (e) {
+      console.error("Groq JSON Parse Failed");
+      return {};
+    }
+
   } catch (error) {
-    console.error("Groq AI Error:", error);
-    return "Review is currently being updated. Please check back later.";
+    console.error("Groq AI Error:", error.message);
+    return {};
   }
 };
 
