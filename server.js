@@ -20,12 +20,10 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // Postman / Server requests
-
+    if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
-
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -49,8 +47,12 @@ mongoose.connect(process.env.MONGO_URI)
    ROUTES
 ========================= */
 app.use('/api/home', homeRoutes);
-app.use('/api/movie', movieRoutes);
-app.use('/api/ai', aiChatRoute); // Gemini AI
+
+// এখানে আমি 'movie' থেকে 'movies' (s যুক্ত) করে দিলাম 
+// যাতে আপনার ব্রাউজারের লিঙ্কের সাথে (/api/movies/search/...) হুবহু মিলে যায়।
+app.use('/api/movies', movieRoutes); 
+
+app.use('/api/ai', aiChatRoute);
 
 /* =========================
    HEALTH CHECK
@@ -59,27 +61,10 @@ app.get('/', (req, res) => {
   res.send('🎬 Filmi Bharat Backend v3 (AI + Secure)');
 });
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok' });
-});
-
-/* =========================
-   ERROR HANDLER
-========================= */
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({
-    success: false,
-    message: err.message || 'Server Error',
-  });
-});
-
 /* =========================
    SERVER
 ========================= */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log('🤖 Gemini AI Enabled');
-  console.log('🎥 Movie API Ready');
 });
