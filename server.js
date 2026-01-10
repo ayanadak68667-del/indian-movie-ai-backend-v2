@@ -1,8 +1,7 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const mongoose = require('mongoose');
-const rateLimit = require('express-rate-limit'); // রেট লিমিট প্যাকেজ
+const rateLimit = require('express-rate-limit');
 
 const homeRoutes = require('./routes/home');
 const movieRoutes = require('./routes/movie');
@@ -11,93 +10,56 @@ const aiChatRoute = require('./routes/aiChat');
 const app = express();
 
 /* =========================
-   RATE LIMITING (SECURITY)
+   MANUAL CORS FIX (THE WALL BREAKER)
 ========================= */
-// ১. এআই চ্যাটবটের জন্য লিমিট (১ মিনিটে ৫টি মেসেজ)
-const chatLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, 
-  max: 5, 
-  message: {
-    success: false,
-    reply: "আপনি খুব দ্রুত মেসেজ পাঠাচ্ছেন! দয়া করে এক মিনিট অপেক্ষা করুন। 🍿"
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// ২. সাধারণ মুভি এপিআই-এর জন্য লিমিট (১ মিনিটে ৩০টি রিকোয়েস্ট)
-const movieLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000,
-  max: 30,
-  message: {
-    success: false,
-    message: "অতিরিক্ত রিকোয়েস্ট পাঠানো হয়েছে, একটু পর চেষ্টা করুন।"
-  }
-});
-
-/* =========================
-   CORS (PRODUCTION SAFE)
-========================= */
-const allowedOrigins = [
-  'https://raatkibaat.in',
-  'https://www.raatkibaat.in',
-  'http://localhost:3000',
-  'https://dc731d7b.app-preview.com' // হোস্টইঙ্গার প্রিভিউ লিঙ্ক
-];
-
-/* আপনার server.js-এর CORS সেকশন পুরোপুরি মুছে শুধু এটি দিন */
 app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Origin", "*"); 
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
   next();
 });
 
-// এটি যোগ করলে ব্রাউজারের সব বাধা দূর হবে
-app.options('*', cors());
-
+/* =========================
+   RATE LIMITING (SECURITY)
+========================= */
+const chatLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, 
+  max: 10, 
+  message: { success: false, reply: "Slow down! Try again in a minute. 🍿" }
+});
 
 /* =========================
-   MIDDLEWARE
+   MIDDLEWARE & ROUTES
 ========================= */
 app.use(express.json());
 
-/* =========================
-   DATABASE
-========================= */
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB Connected with Rate Limiting'))
-  .catch(err => console.error('❌ MongoDB Error:', err));
-
-/* =========================
-   ROUTES (Applied with Rate Limiters)
-========================= */
-app.use('/api/home', movieLimiter, homeRoutes);
-app.use('/api/movies', movieLimiter, movieRoutes); 
+app.use('/api/home', homeRoutes);
+app.use('/api/movies', movieRoutes); 
 app.use('/api/ai', chatLimiter, aiChatRoute);
 
 /* =========================
-   HEALTH CHECK
+   DATABASE & HEALTH
 ========================= */
-app.get('/', (req, res) => {
-  res.send('🎬 Filmi Bharat Backend v3 (AI + Secure + Rate Limited)');
-});
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log('✅ MongoDB Connected! System Ready.'))
+  .catch(err => console.error('❌ MongoDB Error:', err));
 
 app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'Live', 
-    security: 'Rate Limiting Active',
-    message: 'Server is running perfectly!' 
-  });
+  res.json({ status: 'Live', message: 'Everything is fine!' });
+});
+
+app.get('/', (req, res) => {
+  res.send('🎬 Filmi Bharat Backend - Final Version');
 });
 
 /* =========================
-   SERVER
+   SERVER START
 ========================= */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Final Server running on port ${PORT}`);
 });
