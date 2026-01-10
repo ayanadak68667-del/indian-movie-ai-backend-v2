@@ -45,11 +45,16 @@ const allowedOrigins = [
   'https://dc731d7b.app-preview.com' // হোস্টইঙ্গার প্রিভিউ লিঙ্ক
 ];
 
-app.use(cors({
-  origin: '*', 
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+/* আপনার server.js-এর CORS সেকশন পুরোপুরি মুছে শুধু এটি দিন */
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // এটি যোগ করলে ব্রাউজারের সব বাধা দূর হবে
 app.options('*', cors());
