@@ -42,16 +42,27 @@ app.use('/api/movies', movieRoutes);
 app.use('/api/ai', chatLimiter, aiChatRoute);
 
 /* =========================
-   DATABASE & HEALTH
+   DATABASE
 ========================= */
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ MongoDB Connected! System Ready.'))
   .catch(err => console.error('❌ MongoDB Error:', err));
 
+/* =========================
+   SMART HEALTH CHECK ✅
+========================= */
 app.get('/health', (req, res) => {
-  res.json({ status: 'Live', message: 'Everything is fine!' });
+  res.json({
+    status: 'OK',
+    ai: 'online',
+    db: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
+    time: new Date().toISOString()
+  });
 });
 
+/* =========================
+   HOME
+========================= */
 app.get('/', (req, res) => {
   res.send('🎬 Filmi Bharat Backend - Final Version');
 });
