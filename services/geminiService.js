@@ -7,10 +7,7 @@ class GeminiService {
   async chatWithUser(userMessage) {
     try {
       // ✅ এখানে এপিআই ভার্সন 'v1beta' এপিআই কল লেভেলে সেট করুন
-      const model = genAI.getGenerativeModel(
-        { model: "gemini-1.5-flash" },
-        { apiVersion: "v1beta" } // এটি বাধ্যতামূলক
-      );
+      const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-001" });
 
       const prompt = `You are 'Filmi Bharat AI', a helpful movie assistant... User says: ${userMessage}`;
       const result = await model.generateContent(prompt);
