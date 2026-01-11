@@ -18,6 +18,14 @@ router.post('/chat', async (req, res) => {
       });
     }
 
+    // ✅ Hard limit (abuse + huge token protection)
+    if (message.length > 800) {
+      return res.status(400).json({
+        success: false,
+        error: "Message too long. Please ask in a shorter way. 🎬"
+      });
+    }
+
     // ✅ Master Prompt (Filmi AI Brain)
     const prompt = `
 System Instructions:
@@ -48,7 +56,14 @@ User Query:
 ${message}
 `;
 
-    const result = await model.generateContent(prompt);
+    // ✅ Gemini Timeout Protection (15s)
+    const result = await Promise.race([
+      model.generateContent(prompt),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Gemini timeout")), 15000)
+      )
+    ]);
+
     const response = await result.response;
     const text = response.text();
 
@@ -59,7 +74,7 @@ ${message}
     });
 
   } catch (error) {
-    console.error("Gemini Chat Error:", error);
+    console.error("❌ Filmi AI Error:", error.message);
 
     res.status(500).json({ 
       success: false, 
