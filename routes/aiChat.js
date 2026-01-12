@@ -4,7 +4,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Gemini AI Configuration
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "models/gemini-1.5-flash-001" });
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 router.post('/chat', async (req, res) => {
   try {
