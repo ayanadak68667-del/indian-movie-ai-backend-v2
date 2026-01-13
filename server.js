@@ -1,76 +1,95 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 
+// Routes
 const homeRoutes = require('./routes/home');
 const movieRoutes = require('./routes/movie');
 const aiChatRoute = require('./routes/aiChat');
 
 const app = express();
 
-/* =========================
-   MANUAL CORS FIX (THE WALL BREAKER)
-========================= */
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*"); 
-  res.header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
-  }
-  next();
-});
+/* ============================
+   CORS — HOSTINGER + RENDER SAFE
+============================ */
+app.use(cors({
+  origin: [
+    "https://horizons.hostinger.com",
+    "https://www.filmibharat.com",
+    "https://filmi-bharat.com",
+    "http://localhost:3000"
+  ],
+  methods: ["GET", "POST"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: false
+}));
 
-/* =========================
-   RATE LIMITING (SECURITY)
-========================= */
-const chatLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, 
-  max: 10, 
-  message: { success: false, reply: "Slow down! Try again in a minute. 🍿" }
-});
+// Allow preflight requests
+app.options('*', cors());
 
-/* =========================
-   MIDDLEWARE & ROUTES
-========================= */
+/* ============================
+   BODY PARSER
+============================ */
 app.use(express.json());
 
-app.use('/api/home', homeRoutes);
-app.use('/api/movies', movieRoutes); 
-app.use('/api/ai', chatLimiter, aiChatRoute);
+/* ============================
+   RATE LIMIT (AI CHAT PROTECTION)
+============================ */
+const chatLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: {
+    success: false,
+    reply: "Too many requests. Please wait a minute 🍿"
+  }
+});
 
-/* =========================
+// Allow OPTIONS through limiter
+app.use('/api/ai', (req, res, next) => {
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+}, chatLimiter);
+
+/* ============================
+   API ROUTES (MATCH FRONTEND)
+============================ */
+app.use('/home', homeRoutes);      // /home/trending etc
+app.use('/movie', movieRoutes);    // /movie/:id , /movie/search
+app.use('/api/ai', aiChatRoute);   // Filmi AI
+
+/* ============================
    DATABASE
-========================= */
+============================ */
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log('✅ MongoDB Connected! System Ready.'))
+  .then(() => console.log('✅ MongoDB Connected'))
   .catch(err => console.error('❌ MongoDB Error:', err));
 
-/* =========================
-   SMART HEALTH CHECK ✅
-========================= */
+/* ============================
+   HEALTH CHECK
+============================ */
 app.get('/health', (req, res) => {
   res.json({
-    status: 'OK',
-    ai: 'online',
+    status: "ok",
+    api: "online",
+    ai: "ready",
     db: mongoose.connection.readyState === 1 ? "connected" : "disconnected",
     time: new Date().toISOString()
   });
 });
 
-/* =========================
-   HOME
-========================= */
+/* ============================
+   ROOT
+============================ */
 app.get('/', (req, res) => {
-  res.send('🎬 Filmi Bharat Backend - Final Version');
+  res.send('🎬 Filmi Bharat Backend Running');
 });
 
-/* =========================
+/* ============================
    SERVER START
-========================= */
+============================ */
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Final Server running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
