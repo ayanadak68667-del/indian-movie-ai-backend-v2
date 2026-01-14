@@ -16,14 +16,14 @@ const app = express();
 ============================ */
 app.use(cors({
   origin: [
-    "https://horizons.hostinger.com",
-    "https://www.filmibharat.com",
-    "https://filmi-bharat.com",
-    "http://localhost:3000"
+    "https://raatkibaat.in",               // আপনার মেইন ডোমেইন
+    "https://www.raatkibaat.in",
+    "https://horizons.hostinger.com",      // হোস্টিংগার প্রিভিউ
+    "http://localhost:3000"                // লোকাল টেস্ট
   ],
   methods: ["GET", "POST"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: false
+  credentials: true
 }));
 
 // Allow preflight requests
