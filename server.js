@@ -16,12 +16,12 @@ const app = express();
 ============================ */
 app.use(cors({
   origin: [
-    "https://raatkibaat.in",               // আপনার মেইন ডোমেইন
+    "https://raatkibaat.in",
     "https://www.raatkibaat.in",
-    "https://horizons.hostinger.com",      // হোস্টিংগার প্রিভিউ
-    "http://localhost:3000"                // লোকাল টেস্ট
+    "https://horizons.hostinger.com",
+    "https://indian-movie-ai-backend-v2.onrender.com"
   ],
-  methods: ["GET", "POST"],
+  methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true
 }));
